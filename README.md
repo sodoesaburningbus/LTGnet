@@ -13,6 +13,10 @@ The repository contains 4 files:
 
 # Requirements
 Pandas
+
 Pytorch
+
 Numpy
+
 Scikit Learn
+
