@@ -10,3 +10,9 @@ The repository contains 4 files:
 2. train_lightning_net.py - A script for training the network
 3. run_model.py - A script for running inference over the network
 4. lightning_test_data_1000.csv - A small training dataset for demonstrating the neural network
+
+# Requirements
+Pandas
+Pytorch
+Numpy
+Scikit Learn
