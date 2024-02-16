@@ -7,11 +7,13 @@ import copy
 from datetime import datetime
 import pandas
 import numpy as np
+import random
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import normalize
+import os
 
 ### The data loader
 def load_lightning_data(fpath):
@@ -28,19 +30,26 @@ def load_lightning_data(fpath):
 class LTGnet(nn.Module):
 
     # The initialization function
-    def __init__(self, n_features):
+    def __init__(self, n_features, random_seed=None):
 
         # Need to call the init of the base Module function
         super(LTGnet, self).__init__()
+
+        # Store randomization seed
+        self.seed = random_seed
+        if (self.seed != None):
+            self.set_seed()
 
         # Define the model architecture
         # This is more art than science, unfortunately.
         # Multiple hidden layers are called Deep Learning
         # More layers typically work better than fewer but larger layers.
         self.model = nn.Sequential(
-            nn.Linear(n_features, 60), # This is the input layer of the model
+            nn.Linear(n_features,40), # This is the input layer of the model
             nn.LeakyReLU(),            # This is the activation function, it introduces non-linearity
-            nn.Linear(60, 30),         # This is the first hidden layer of the model
+            nn.Linear(40, 30),         # This is the first hidden layer of the model
+            nn.LeakyReLU(), 
+            nn.Linear(30, 30),         # This is the first hidden layer of the model
             nn.LeakyReLU(),            # Activation function for first hidden layer
             nn.Linear(30, 20),         # Second hidden layer
             nn.LeakyReLU(),            # Activation function for second hidden layer
@@ -71,7 +80,7 @@ class LTGnet(nn.Module):
     def train(self, X, y, n_epochs=100, batch_size=50, log_path=None):
 
         # Create the training/test split
-        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, shuffle=True)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.75, shuffle=True, random_state=self.seed)
 
         # Convert to PyTorch Tensors (in case they're not already)
         # Note the 32bit dtype. Model weights default to float32 and the data must be the same
@@ -158,6 +167,8 @@ class LTGnet(nn.Module):
         log.write(f'\nFAR = {fp/(fp+tn)*100.0:.2f}%')
         log.close()
 
+        return best_loss
+
     # A function to load a previous model state
     def load_model(self, fpath):
         self.model.load_state_dict(torch.load(fpath))
@@ -175,3 +186,19 @@ class LTGnet(nn.Module):
 
         X = torch.tensor(X, dtype=torch.float32)
         return self.model(X)
+
+    # A function for setting all of the various random states
+    def set_seed(self):
+
+        # Python and Numpy seeds
+        np.random.seed(self.seed)
+        random.seed(self.seed)
+
+        # PyTorch
+        torch.manual_seed(self.seed)
+        torch.cuda.manual_seed(self.seed)
+        
+        # Set OS environmental seed
+        os.environ["PYTHONHASHSEED"] = str(self.seed)
+
+        return
